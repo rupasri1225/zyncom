@@ -1,0 +1,667 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zyncom — {{ room_name }}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/zyncom.css' %}">
+  <style>
+    /* Full-height workspace layout — no scroll on outer page */
+    html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
+    body {
+      display: flex; flex-direction: column;
+      background: var(--bg-dark);
+      /* Override zyncom.css min-height so flex fills exactly the viewport */
+      min-height: unset !important;
+    }
+
+    /* ── Top bar ─────────────────────────────────────────────────────────── */
+    .ws-topbar {
+      background: linear-gradient(135deg, var(--purple-dark), var(--purple-light));
+      height: 52px; display: flex; align-items: center;
+      padding: 0 1rem; gap: 0.75rem; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .ws-brand { font-weight: 800; font-size: 1.1rem; color: white; letter-spacing: -0.3px; }
+    .ws-room-name { color: rgba(255,255,255,0.85); font-size: 0.95rem; font-weight: 500; }
+    .ws-sep { color: rgba(255,255,255,0.4); }
+    .ws-topbar-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+    #recording-indicator {
+      background: #dc2626; color: white; font-size: 0.75rem; font-weight: 700;
+      padding: 0.2rem 0.6rem; border-radius: 999px; animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    /* ── Main area ───────────────────────────────────────────────────────── */
+    /* 52px topbar + 38px footer = 90px total chrome */
+    .ws-body { display: flex; overflow: hidden; height: calc(100vh - 90px); }
+
+    /* ── Left panel ──────────────────────────────────────────────────────── */
+    .ws-left {
+      width: 320px; flex-shrink: 0; background: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column; height: 100%; overflow: hidden;
+    }
+    .ws-tabs {
+      display: flex; border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+    }
+    .ws-tab {
+      flex: 1; padding: 0.6rem 0.25rem; text-align: center; font-size: 0.78rem;
+      font-weight: 600; color: var(--text-muted); cursor: pointer;
+      border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s;
+      background: none; border-top: none; border-left: none; border-right: none;
+    }
+    .ws-tab.active { color: white; border-bottom-color: var(--purple-light); }
+    .ws-tab-content { flex: 1; overflow-y: auto; padding: 0.75rem; display: none; min-height: 0; }
+    .ws-tab-content.active { display: flex; flex-direction: column; min-height: 0; }
+
+    /* ── Chat ────────────────────────────────────────────────────────────── */
+    #chat-messages { flex: 1; overflow-y: auto; margin-bottom: 0.5rem; }
+    .chat-msg { margin-bottom: 0.6rem; }
+    .chat-msg-user { font-size: 0.78rem; font-weight: 700; color: #a78bfa; }
+    .chat-msg-text { font-size: 0.875rem; color: #f8fafc; word-break: break-word; }
+    .chat-msg-time { font-size: 0.7rem; color: #a0aec0; }
+    .chat-input-row { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    #chat-input { flex: 1; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; caret-color: #fff; }
+    #ws-status { font-size: 0.75rem; color: #f59e0b; padding: 0.3rem 0; text-align: center; display: none; }
+
+    /* ── Notes ───────────────────────────────────────────────────────────── */
+    #notes-textarea {
+      flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm); color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important; caret-color: #fff;
+      padding: 0.75rem; font-size: 0.875rem; resize: none; outline: none; min-height: 200px;
+    }
+    #notes-textarea:focus { border-color: var(--purple-light); }
+    #notes-textarea::placeholder { color: rgba(255,255,255,0.45) !important; -webkit-text-fill-color: rgba(255,255,255,0.45) !important; }
+    #note-status { font-size: 0.75rem; margin-top: 0.4rem; min-height: 1.2em; }
+
+    /* ── Files ───────────────────────────────────────────────────────────── */
+    .file-item {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.5rem;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .file-item:hover { border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.06); }
+    .file-item.recording-item { border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+    .file-item.recording-item:hover { border-color: rgba(220,38,38,0.5); }
+    .file-item-name { font-size: 0.85rem; font-weight: 600; word-break: break-all; color: #f8fafc; }
+    .file-item-meta { font-size: 0.72rem; color: #a0aec0; margin-top: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .file-item-meta a { color: #818cf8; font-weight: 600; }
+    .file-item-meta a:hover { color: #a5b4fc; }
+    #file-error { font-size: 0.78rem; color: #fca5a5; margin-top: 0.4rem; min-height: 1em; }
+    #file-hint { font-size: 0.72rem; color: #a0aec0; margin-bottom: 0.5rem; }
+
+    /* ── People ──────────────────────────────────────────────────────────── */
+    .person-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);
+    }
+    .person-name { font-size: 0.875rem; display: flex; align-items: center; gap: 0.4rem; }
+
+    /* ── Activity ────────────────────────────────────────────────────────── */
+    .activity-item { font-size: 0.8rem; color: var(--text-muted); padding: 0.3rem 0; border-bottom: 1px solid var(--border-color); }
+    .activity-item span { color: var(--text-primary); }
+
+    /* ── Right panel (video) ─────────────────────────────────────────────── */
+    .ws-right { flex: 1; height: 100%; background: #0a0a0a; position: relative; overflow: hidden; }
+    #video-container { width: 100%; height: 100%; display: block; }
+    #video-error {
+      position: absolute; inset: 0; display: none; align-items: center;
+      justify-content: center; color: var(--text-muted); font-size: 0.875rem;
+      text-align: left; padding: 2rem; background: #0a0a0a; overflow-y: auto;
+    }
+    #video-error > div { max-width: 420px; line-height: 1.8; }
+
+    /* ── End meeting overlay ─────────────────────────────────────────────── */
+    #end-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      z-index: 9999; align-items: center; justify-content: center;
+    }
+    #end-overlay .msg {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius); padding: 2rem 3rem; text-align: center;
+      font-size: 1.2rem; font-weight: 600;
+    }
+
+    /* ── Empty states ────────────────────────────────────────────────────── */
+    .empty-msg { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1.5rem 0; }
+
+    /* ── Responsive ──────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .ws-body { flex-direction: column; }
+      .ws-left { width: 100%; min-width: unset; height: 50%; border-right: none; border-bottom: 1px solid var(--border-color); }
+      .ws-right { height: 50%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP BAR ──────────────────────────────────────────────────────────── -->
+<div class="ws-topbar">
+  <div class="ws-brand">Z Zyncom</div>
+  <span class="ws-sep">|</span>
+  <span class="ws-room-name">{{ room_name }}</span>
+  <span id="participant-count" style="font-size:0.78rem;color:rgba(255,255,255,0.6);">0 online</span>
+
+  <div class="ws-topbar-right">
+    {% if is_host %}<span class="badge badge-host">Host</span>{% endif %}
+
+    <!-- Recording indicator (visible to all when active) -->
+    <span id="recording-indicator" {% if not is_recording %}style="display:none"{% endif %}>
+      ● Recording
+    </span>
+
+    <!-- Host-only controls -->
+    {% if is_host %}
+      <button id="toggle-recording-btn" class="btn btn-sm"
+              style="background:rgba(255,255,255,0.15);color:white;"
+              onclick="toggleRecording()">
+        {% if is_recording %}Stop Recording{% else %}Start Recording{% endif %}
+      </button>
+      <button class="btn btn-sm btn-danger" onclick="endMeeting()">End Meeting</button>
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}" class="btn btn-sm btn-secondary" onclick="intentionalLeave()">Leave</a>
+  </div>
+</div>
+
+<!-- ── MAIN WORKSPACE ────────────────────────────────────────────────────── -->
+<div class="ws-body">
+
+  <!-- ── LEFT PANEL ──────────────────────────────────────────────────────── -->
+  <div class="ws-left">
+
+    <!-- Tab navigation -->
+    <div class="ws-tabs">
+      <button class="ws-tab active" onclick="switchTab('chat')">💬 Chat</button>
+      <button class="ws-tab" onclick="switchTab('notes')">📝 Notes</button>
+      <button class="ws-tab" onclick="switchTab('files')">📁 Files</button>
+      <button class="ws-tab" onclick="switchTab('people')">👥 People</button>
+      <button class="ws-tab" onclick="switchTab('activity')">📋 Log</button>
+    </div>
+
+    <!-- ── CHAT TAB ──────────────────────────────────────────────────────── -->
+    <div id="tab-chat" class="ws-tab-content active">
+      <div id="ws-status">Reconnecting…</div>
+      <div id="chat-messages">
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="chat-msg" data-id="{{ msg.pk }}">
+              <div class="chat-msg-user">{{ msg.user.username|default:"Unknown" }}
+                <span class="chat-msg-time">{{ msg.timestamp|date:"H:i" }}</span>
+              </div>
+              <div class="chat-msg-text">{{ msg.content }}</div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-msg" id="chat-empty">No messages yet — start the conversation.</div>
+        {% endif %}
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" class="form-control" placeholder="Type a message…" maxlength="1000">
+        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <!-- ── NOTES TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-notes" class="ws-tab-content">
+      <textarea id="notes-textarea"
+                placeholder="Start typing your notes here…">{{ note.content|default:'' }}</textarea>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-shrink:0;">
+        <button class="btn btn-primary btn-sm" onclick="saveNote()">Save Notes</button>
+        <span id="note-status" style="align-self:center;"></span>
+      </div>
+    </div>
+
+    <!-- ── FILES TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-files" class="ws-tab-content">
+      <p id="file-hint">Allowed: images, PDF, Word, Excel, plain text · Max 20 MB</p>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-shrink:0;">
+        <input type="file" id="file-input" class="form-control form-control-sm"
+               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
+        <button class="btn btn-primary btn-sm" onclick="uploadFile()">Upload</button>
+      </div>
+      <div id="file-error"></div>
+      <div id="files-list">
+        {% if files %}
+          {% for f in files %}
+            {% if f.original_filename|slice:":15" == "meeting_record_" %}
+              <!-- Recording file — styled differently -->
+              <div class="file-item recording-item">
+                <div class="file-item-name">🔴 {{ f.original_filename }}</div>
+                <div class="file-item-meta">
+                  <span>📹 Recording</span>
+                  <span>·</span>
+                  <span>{{ f.uploaded_by.username|default:"Unknown" }}</span>
+                  <span>·</span>
+                  <span>{{ f.uploaded_at|date:"M d, H:i" }}</span>
+                  <span>·</span>
+                  <a href="/files/{{ f.pk }}/">⬇ Download</a>
+                </div>
+              </div>
+            {% else %}
+              <!-- Regular file -->
+              <div class="file-item">
+                <div class="file-item-name">📄 {{ f.original_filename }}</div>
+                <div class="file-item-meta">
+                  <span>{{ f.uploaded_by.username|default:"Unknown" }}</span>
+                  <span>·</span>
+                  <span>{{ f.uploaded_at|date:"M d, H:i" }}</span>
+                  <span>·</span>
+                  <a href="/files/{{ f.pk }}/">⬇ Download</a>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="empty-msg" id="files-empty">No files shared yet — upload one to get started.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── PEOPLE TAB ─────────────────────────────────────────────────────── -->
+    <div id="tab-people" class="ws-tab-content">
+      <div id="people-list">
+        <div class="empty-msg" id="people-empty">You're the only one here — share the room ID to invite others.</div>
+      </div>
+    </div>
+
+    <!-- ── ACTIVITY TAB ──────────────────────────────────────────────────── -->
+    <div id="tab-activity" class="ws-tab-content">
+      <div id="activity-list">
+        <div class="empty-msg">No activity yet.</div>
+      </div>
+    </div>
+
+  </div><!-- end ws-left -->
+
+  <!-- ── RIGHT PANEL (VIDEO) ───────────────────────────────────────────── -->
+  <div class="ws-right">
+    <div id="video-container"></div>
+    <div id="video-error">
+      <div>
+        <div style="font-size:2rem;margin-bottom:0.5rem;">📹</div>
+        <div id="video-error-msg">Initializing video…</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end ws-body -->
+
+<!-- ── END MEETING OVERLAY ───────────────────────────────────────────────── -->
+<div id="end-overlay">
+  <div class="msg">
+    <div style="font-size:2rem;margin-bottom:0.5rem;">👋</div>
+    <div id="end-overlay-msg">Meeting ended by host</div>
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">Redirecting to dashboard…</div>
+  </div>
+</div>
+
+<!-- ── TOAST CONTAINER ───────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── FOOTER ────────────────────────────────────────────────────────────── -->
+<footer class="zyncom-footer">Designed by Yarramsetti Rupa Sri &amp; Team</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ── Django template variables passed to JS ──────────────────────────────────
+const ROOM_ID      = "{{ room_id }}";
+const USERNAME     = "{{ username }}";
+const IS_HOST      = {{ is_host|yesno:"true,false" }};
+const ZEGO_APP_ID  = "{{ ZEGO_APP_ID }}";
+const ZEGO_SERVER  = "{{ ZEGO_SERVER_SECRET }}";
+const CSRF_TOKEN   = "{{ csrf_token }}";
+let   isRecording  = {{ is_recording|yesno:"true,false" }};
+
+// ── Tab system ──────────────────────────────────────────────────────────────
+let activeTab = 'chat';
+function switchTab(name) {
+  document.querySelectorAll('.ws-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ws-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.ws-tab[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  activeTab = name;
+}
+
+// ── Toast helper ─────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 4000);
+}
+
+// ── Participant list ──────────────────────────────────────────────────────────
+let participants = [];
+function renderParticipants(list) {
+  participants = list;
+  document.getElementById('participant-count').textContent = list.length + ' online';
+  const el = document.getElementById('people-list');
+  if (!list.length) { el.innerHTML = '<div class="empty-msg">You\'re the only one here — share the room ID to invite others.</div>'; return; }
+  el.innerHTML = list.map(u => `
+    <div class="person-item">
+      <span class="person-name">
+        👤 ${u}
+        ${u === "{{ room.created_by.username }}" ? '<span class="badge badge-host" style="font-size:0.65rem;">Host</span>' : ''}
+      </span>
+      ${IS_HOST && u !== USERNAME ? `<button class="btn btn-sm btn-danger" onclick="removeParticipant('${u}')">Remove</button>` : ''}
+    </div>`).join('');
+}
+
+// ── Activity log ──────────────────────────────────────────────────────────────
+const activityLog = [];
+function addActivity(text) {
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  activityLog.unshift({text, time: now});
+  if (activityLog.length > 50) activityLog.pop();
+  const el = document.getElementById('activity-list');
+  el.innerHTML = activityLog.map(a => `<div class="activity-item"><span>${a.text}</span> <span style="float:right">${a.time}</span></div>`).join('');
+}
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
+let ws, reconnectAttempts = 0, intentionalClose = false;
+const MAX_RECONNECT = 5;
+
+function connectWebSocket() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/room/${ROOM_ID}/`);
+
+  ws.onopen = () => {
+    reconnectAttempts = 0;
+    document.getElementById('ws-status').style.display = 'none';
+  };
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    switch(data.type) {
+      case 'chat_message':
+        appendChatMessage(data.username, data.message, data.timestamp);
+        if (activeTab !== 'chat') showToast(`${data.username}: ${data.message.substring(0,40)}`);
+        addActivity(`${data.username} sent a message`);
+        break;
+      case 'user_joined':
+        renderParticipants(data.participants);
+        if (data.username !== USERNAME) { showToast(`${data.username} joined the meeting`); addActivity(`${data.username} joined`); }
+        break;
+      case 'user_left':
+        renderParticipants(data.participants);
+        if (data.username !== USERNAME) { showToast(`${data.username} left the meeting`); addActivity(`${data.username} left`); }
+        break;
+      case 'force_remove':
+        showEndOverlay('You have been removed by the host');
+        setTimeout(() => { intentionalClose=true; location.href='/dashboard/'; }, 3000);
+        break;
+      case 'end_meeting':
+        showEndOverlay('Meeting ended by host');
+        setTimeout(() => { intentionalClose=true; location.href='/dashboard/'; }, 3000);
+        break;
+      case 'recording_started':
+        isRecording = true;
+        document.getElementById('recording-indicator').style.display = '';
+        if (IS_HOST) document.getElementById('toggle-recording-btn').textContent = 'Stop Recording';
+        showToast('Recording has started'); addActivity('Host started recording');
+        break;
+      case 'recording_stopped':
+        isRecording = false;
+        document.getElementById('recording-indicator').style.display = 'none';
+        if (IS_HOST) document.getElementById('toggle-recording-btn').textContent = 'Start Recording';
+        showToast('Recording has stopped'); addActivity('Host stopped recording');
+        break;
+      case 'recording_file':
+        appendRecordingMessage(data.filename, data.file_url, data.uploaded_by);
+        // Also add to files tab so it's visible there too
+        addRecordingToFilesList(data.filename, data.file_url, data.uploaded_by);
+        showToast('📹 Meeting recording saved to chat');
+        addActivity('Recording saved to chat');
+        switchTab('chat');
+        break;
+    }
+  };
+
+  ws.onclose = (e) => {
+    if (intentionalClose) return;
+    if (reconnectAttempts < MAX_RECONNECT) {
+      const delay = Math.pow(2, reconnectAttempts) * 1000;
+      reconnectAttempts++;
+      document.getElementById('ws-status').style.display = 'block';
+      document.getElementById('ws-status').textContent = `Reconnecting… (attempt ${reconnectAttempts}/${MAX_RECONNECT})`;
+      setTimeout(connectWebSocket, delay);
+    } else {
+      document.getElementById('ws-status').textContent = 'Connection lost — please refresh the page.';
+      document.getElementById('ws-status').style.color = '#fca5a5';
+    }
+  };
+
+  ws.onerror = () => console.error('[Platform Error] WebSocket error');
+}
+
+// ── Add recording to files tab ────────────────────────────────────────────────
+function addRecordingToFilesList(filename, fileUrl, uploadedBy) {
+  const empty = document.getElementById('files-empty');
+  if (empty) empty.remove();
+  const list = document.getElementById('files-list');
+  const div = document.createElement('div');
+  div.className = 'file-item recording-item';
+  div.innerHTML =
+    '<div class="file-item-name">\uD83D\uDD34 ' + filename + '</div>' +
+    '<div class="file-item-meta">' +
+    '<span>\uD83D\uDCF9 Recording</span><span>\u00B7</span>' +
+    '<span>' + uploadedBy + '</span><span>\u00B7</span>' +
+    '<a href="' + fileUrl + '">\u2B07 Download</a>' +
+    '</div>';
+  list.prepend(div);
+}
+
+// ── Recording file message in chat ───────────────────────────────────────────
+function appendRecordingMessage(filename, fileUrl, uploadedBy) {
+  const empty = document.getElementById('chat-empty');
+  if (empty) empty.remove();
+  const box = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  const t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  div.innerHTML =
+    '<div class="chat-msg-user">\u{1F4F9} System <span class="chat-msg-time">' + t + '</span></div>' +
+    '<div style="background:linear-gradient(135deg,rgba(107,33,168,0.3),rgba(79,70,229,0.3));' +
+    'border:1px solid rgba(124,58,237,0.4);border-radius:8px;padding:0.75rem;margin-top:0.25rem;' +
+    'display:flex;align-items:center;gap:0.75rem;">' +
+    '<span style="font-size:1.5rem;">\u{1F4F9}</span>' +
+    '<div style="flex:1;">' +
+    '<div style="font-weight:700;color:#f8fafc;font-size:0.875rem;">Meeting Recording Available</div>' +
+    '<div style="font-size:0.75rem;color:#a0aec0;margin-top:0.1rem;">' + filename + '</div>' +
+    '</div>' +
+    '<a href="' + fileUrl + '" target="_blank" ' +
+    'style="background:linear-gradient(135deg,#6B21A8,#4F46E5);color:white;' +
+    'padding:0.35rem 0.85rem;border-radius:6px;font-size:0.78rem;' +
+    'font-weight:700;text-decoration:none;white-space:nowrap;">' +
+    '\u2B07 Download</a></div>';
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+const seenIds = new Set(
+  [...document.querySelectorAll('.chat-msg[data-id]')].map(el => el.dataset.id)
+);
+
+function appendChatMessage(username, message, timestamp) {
+  const empty = document.getElementById('chat-empty');
+  if (empty) empty.remove();
+  const box = document.getElementById('chat-messages');
+  const div = document.createElement('div'); div.className = 'chat-msg';
+  const t = timestamp ? new Date(timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+  div.innerHTML = `<div class="chat-msg-user">${username} <span class="chat-msg-time">${t}</span></div><div class="chat-msg-text">${message}</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({type: 'chat_message', message: msg}));
+  input.value = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('chat-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+  const box = document.getElementById('chat-messages'); box.scrollTop = box.scrollHeight;
+});
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+function saveNote() {
+  const content = document.getElementById('notes-textarea').value;
+  const status  = document.getElementById('note-status');
+  status.textContent = 'Saving…'; status.style.color = 'var(--text-muted)';
+  fetch(`/room/${ROOM_ID}/note/save/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `content=${encodeURIComponent(content)}`
+  }).then(r => r.json()).then(d => {
+    if (d.status === 'saved') { status.textContent = 'Saved ✓'; status.style.color = '#86efac'; }
+    else { status.textContent = 'Save failed — please try again'; status.style.color = '#fca5a5'; }
+  }).catch(() => { status.textContent = 'Save failed — please try again'; status.style.color = '#fca5a5'; });
+}
+
+// ── File upload ───────────────────────────────────────────────────────────────
+const ALLOWED_TYPES = ['image/jpeg','image/png','image/gif','image/webp','application/pdf',
+  'application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','text/plain'];
+
+function uploadFile() {
+  const input = document.getElementById('file-input');
+  const errEl = document.getElementById('file-error');
+  errEl.textContent = '';
+  if (!input.files.length) { errEl.textContent = 'Please select a file.'; return; }
+  const file = input.files[0];
+  if (!ALLOWED_TYPES.includes(file.type)) { errEl.textContent = 'File type not allowed. Accepted: images, PDF, Word, Excel, plain text.'; return; }
+  if (file.size > 20 * 1024 * 1024) { errEl.textContent = 'File too large. Maximum allowed size is 20 MB.'; return; }
+  const fd = new FormData(); fd.append('file', file);
+  fetch(`/room/${ROOM_ID}/file/upload/`, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}, body:fd})
+    .then(r => r.json()).then(d => {
+      if (d.error) { errEl.textContent = d.message || 'Upload failed.'; return; }
+      const empty = document.getElementById('files-empty'); if (empty) empty.remove();
+      const list = document.getElementById('files-list');
+      const div = document.createElement('div'); div.className = 'file-item';
+      div.innerHTML = `<div class="file-item-name">📄 ${d.original_filename}</div>
+        <div class="file-item-meta">${d.uploaded_by} · <a href="${d.download_url}" style="color:var(--purple-light);">Download</a></div>`;
+      list.prepend(div); input.value = '';
+      showToast(`${d.uploaded_by} shared a file: ${d.original_filename}`);
+      addActivity(`${d.uploaded_by} uploaded ${d.original_filename}`);
+    }).catch(() => { errEl.textContent = 'Upload failed — server error. Please try again.'; });
+}
+
+// ── Host actions ──────────────────────────────────────────────────────────────
+function toggleRecording() {
+  fetch(`/room/${ROOM_ID}/recording/toggle/`, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r => r.json()).then(d => { if (d.error) showToast('Error: ' + d.error); })
+    .catch(() => console.error('[Platform Error] Toggle recording failed'));
+}
+
+function removeParticipant(username) {
+  fetch(`/room/${ROOM_ID}/remove/${username}/`, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r => r.json()).catch(() => console.error('[Platform Error] Remove participant failed'));
+}
+
+function endMeeting() {
+  fetch(`/room/${ROOM_ID}/end/`, {method:'POST', headers:{'X-CSRFToken':CSRF_TOKEN}})
+    .then(r => r.json()).catch(() => console.error('[Platform Error] End meeting failed'));
+}
+
+function intentionalLeave() { intentionalClose = true; }
+
+// ── End overlay ───────────────────────────────────────────────────────────────
+function showEndOverlay(msg) {
+  document.getElementById('end-overlay-msg').textContent = msg;
+  document.getElementById('end-overlay').style.display = 'flex';
+}
+
+// ── ZegoCloud video ───────────────────────────────────────────────────────────
+function initZego() {
+  const videoError    = document.getElementById('video-error');
+  const videoErrorMsg = document.getElementById('video-error-msg');
+
+  // Check if credentials are configured
+  if (!ZEGO_APP_ID || ZEGO_APP_ID === 'your_zego_app_id_here' || ZEGO_APP_ID === '') {
+    videoError.style.display = 'flex';
+    videoErrorMsg.innerHTML = `
+      <strong>ZegoCloud credentials not set up yet.</strong><br><br>
+      To enable video calls:<br>
+      1. Go to <a href="https://console.zegocloud.com" target="_blank" style="color:#a78bfa;">console.zegocloud.com</a><br>
+      2. Create a free account &amp; new project<br>
+      3. Copy your <strong>App ID</strong> and <strong>Server Secret</strong><br>
+      4. Open your <code>.env</code> file and set:<br>
+      <code style="display:block;margin-top:0.5rem;background:rgba(0,0,0,0.3);padding:0.5rem;border-radius:4px;">
+ZEGO_APP_ID=your_actual_app_id<br>
+ZEGO_SERVER_SECRET=your_actual_secret</code><br>
+      5. Restart the server
+    `;
+    return;
+  }
+
+  // Credentials are present — initialize ZegoCloud
+  const timeout = setTimeout(() => {
+    videoError.style.display = 'flex';
+    videoErrorMsg.textContent = 'Could not connect to video — please refresh.';
+  }, 10000);
+
+  try {
+    // generateKitTokenForTest is fine for development
+    // For production use generateKitTokenForProd with a backend token server
+    const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+      parseInt(ZEGO_APP_ID),
+      ZEGO_SERVER,
+      ROOM_ID,
+      USERNAME,   // user ID
+      USERNAME    // display name
+    );
+
+    const zp = ZegoUIKitPrebuilt.create(kitToken);
+
+    zp.joinRoom({
+      container:       document.getElementById('video-container'),
+      scenario:        { mode: ZegoUIKitPrebuilt.VideoConference },
+      showPreJoinView: false,   // skip the pre-join screen, auto-join
+      turnOnCameraWhenJoining:     true,
+      turnOnMicrophoneWhenJoining: true,
+      showMyCameraToggleButton:    true,
+      showMyMicrophoneToggleButton: true,
+      showAudioVideoSettingsButton: true,
+      showScreenSharingButton:     true,
+      showTextChat:                false,  // we have our own chat
+      showUserList:                false,  // we have our own people tab
+      maxUsers:                    50,
+      layout:                      'Auto',
+      onJoinRoom: () => {
+        clearTimeout(timeout);
+        videoError.style.display = 'none';
+      },
+      onLeaveRoom: () => {
+        intentionalClose = true;
+        location.href = '/dashboard/';
+      },
+    });
+
+  } catch(e) {
+    clearTimeout(timeout);
+    videoError.style.display = 'flex';
+    videoErrorMsg.textContent = 'Video error: ' + e.message + '. Check your App ID and Server Secret.';
+    console.error('[Platform Error] ZegoCloud init failed:', e);
+  }
+}
+
+// ── Start everything ──────────────────────────────────────────────────────────
+connectWebSocket();
+</script>
+
+<!-- ZegoCloud SDK — loaded after page ready -->
+<script src="https://unpkg.com/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js" onload="initZego()"></script>
+
+</body>
+</html>

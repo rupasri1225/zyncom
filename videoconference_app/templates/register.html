@@ -1,40 +1,126 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<!---Coding By CoderGirl | www.codinglabweb.com--->
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <!--<title>Login & Registration Form | CoderGirl</title>-->
-  <!---Custom CSS File--->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-  <div class="container">
-    <div class="registration form">
-      <header>Signup</header>
-      <form action="{% url 'register' %}" method="POST">
-        {% csrf_token %}
-        <input type="text" placeholder="Enter your first name" name="first_name">
-        <input type="text" placeholder="Enter your last name" name="last_name">
-        <input type="text" placeholder="Enter your email" name="email">
-        <input type="password" placeholder="Create a password" name="password1">
-        <input type="password" placeholder="Confirm your password" name="password2">
-        <input type="submit" class="button" value="Signup">
-        <center>
-          {% if error %}
-          <p style="color: red;">{{ error }}</p>
-          {% endif %}
-        </center>
-        
-      </form>
-      <div class="signup">
-        <span class="signup">Already have an account?
-          <a href="{% url 'login' %}"><label for="check">Signin</label></a>
-        </span>
-      </div>
+{% block title %}Create Account{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-page {
+    min-height: calc(100vh - 60px - 40px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 2rem 1rem;
+    background: radial-gradient(ellipse at 30% 20%, rgba(107,33,168,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(79,70,229,0.1) 0%, transparent 60%);
+  }
+  .auth-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-xl);
+    padding: 2.5rem 2rem;
+    width: 100%; max-width: 440px;
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(124,58,237,0.08);
+  }
+  .auth-logo {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.6rem; margin-bottom: 1.75rem;
+  }
+  .auth-logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--purple-800), var(--purple-600));
+    border-radius: var(--r-md);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 1.3rem; color: white;
+    box-shadow: var(--shadow-purple);
+  }
+  .auth-logo-name { font-size: 1.6rem; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .auth-title { font-size: 1.2rem; font-weight: 700; text-align: center; color: white; margin-bottom: 0.3rem; }
+  .auth-sub   { font-size: 0.875rem; color: var(--text-muted); text-align: center; margin-bottom: 1.75rem; }
+  .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .auth-footer { text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--text-muted); }
+  .auth-footer a { color: var(--purple-400); font-weight: 600; }
+  .auth-footer a:hover { color: var(--purple-300); }
+  @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <div class="auth-logo-icon">Z</div>
+      <span class="auth-logo-name">Zyncom</span>
     </div>
+
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Join Zyncom and start collaborating</p>
+
+    {% if error %}
+      <div class="alert alert-error">⚠ {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'register' %}">
+      {% csrf_token %}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="id_first_name">First Name</label>
+          <input type="text" id="id_first_name" name="first_name" class="form-control"
+                 placeholder="First name" required autofocus
+                 value="{{ form.first_name.value|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_last_name">Last Name</label>
+          <input type="text" id="id_last_name" name="last_name" class="form-control"
+                 placeholder="Last name" required
+                 value="{{ form.last_name.value|default:'' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_email">Email <span style="color:var(--text-dim);font-weight:400;text-transform:none;">(used as username)</span></label>
+        <input type="email" id="id_email" name="email" class="form-control"
+               placeholder="your@email.com" required
+               value="{{ form.email.value|default:'' }}">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password1">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="id_password1" name="password1" class="form-control"
+                 placeholder="Create a strong password" required autocomplete="new-password">
+          <button type="button" class="input-toggle" onclick="togglePwd('id_password1', this)">👁</button>
+        </div>
+        <p class="form-hint">At least 8 characters, not too common.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password2">Confirm Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="id_password2" name="password2" class="form-control"
+                 placeholder="Repeat your password" required autocomplete="new-password">
+          <button type="button" class="input-toggle" onclick="togglePwd('id_password2', this)">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:0.25rem;">
+        Create Account
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="{% url 'login' %}">Sign in</a>
+    </div>
+
   </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function togglePwd(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+</script>
+{% endblock %}

@@ -1,75 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Call</title>
-    <style>
-        #root {
-            width: 100vw;
-            height: 100vh;
-        }
-    </style>
+
+<title>Video Meeting</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="shortcut icon" href="https://st1.zoom.us/homepage/publish/zoom.ico">
+
+<style>
+
+body{
+margin:0;
+padding:0;
+}
+
+#root{
+width:100vw;
+height:100vh;
+}
+
+</style>
+
+<script defer src="https://unpkg.com/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js"></script>
+
 </head>
+
 <body>
-    <div id="root"></div>
-    <script src="https://unpkg.com/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js"></script>
-    <script>
-        window.onload = function () {
-            function getUrlParams(url) {
-                let urlStr = url.split('?')[1];
-                const urlSearchParams = new URLSearchParams(urlStr);
-                const result = Object.fromEntries(urlSearchParams.entries());
-                return result;
-            }
 
-            const params = getUrlParams(window.location.href);
-            const roomID = params['roomID'] || (Math.floor(Math.random() * 10000) + "");
-            const userID = Math.floor(Math.random() * 10000) + "";
-            const userName = "{{ name }}"
-            const appID = 2028868635; // change this
-            const serverSecret = "f57b818176b3c2dca1f04345c7e52c92"; // change this
-            const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(appID, serverSecret, roomID, userID, userName);
+<div id="root"></div>
 
-            const zp = ZegoUIKitPrebuilt.create(kitToken);
-            zp.joinRoom({
-                container: document.querySelector("#root"),
-                sharedLinks: [{
-                    name: 'Personal link',
-                    url: window.location.protocol + '//' + window.location.host + window.location.pathname + '?roomID=' + roomID,
-                }],
-                scenario: {
-                    mode: ZegoUIKitPrebuilt.VideoConference,
-                },
-                turnOnMicrophoneWhenJoining: false,
-                turnOnCameraWhenJoining: false,
-                showMyCameraToggleButton: true,
-                showMyMicrophoneToggleButton: true,
-                showAudioVideoSettingsButton: true,
-                showScreenSharingButton: true,
-                showTextChat: true,
-                showUserList: true,
-                maxUsers: 50,
-                layout: "Grid",
-                showLayoutButton: true,
-            });
+<script>
 
-            // WebSocket connection
-            const socket = new WebSocket('ws://' + window.location.host + '/ws/randomcall/' + roomID + '/');
+document.addEventListener("DOMContentLoaded", function(){
 
-            socket.onmessage = function (e) {
-                const data = JSON.parse(e.data);
-                if (data.leave) {
-                    alert(data.message);
-                    window.location.href = '/dashboard';
-                }
-            };
+const roomID = "{{ roomID }}"
 
-            socket.onclose = function (e) {
-                console.error('Chat socket closed unexpectedly');
-            };
-        }
-    </script>
+const userID = Math.floor(Math.random()*100000)+"" 
+
+const userName = "{{ name }}"
+
+const appID = 2028868635
+const serverSecret = "f57b818176b3c2dca1f04345c7e52c92"
+
+if(typeof ZegoUIKitPrebuilt === "undefined"){
+
+console.error("Zego SDK failed to load")
+
+return
+
+}
+
+const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+appID,
+serverSecret,
+roomID,
+userID,
+userName
+)
+
+const zp = ZegoUIKitPrebuilt.create(kitToken)
+
+zp.joinRoom({
+
+container: document.querySelector("#root"),
+
+sharedLinks:[
+{
+name:"Meeting Link",
+url: window.location.protocol+"//"+window.location.host+"/meeting/?roomID="+roomID
+}
+],
+
+scenario:{
+mode: ZegoUIKitPrebuilt.VideoConference
+},
+
+turnOnMicrophoneWhenJoining:false,
+
+turnOnCameraWhenJoining:false,
+
+showMyCameraToggleButton:true,
+
+showMyMicrophoneToggleButton:true,
+
+showAudioVideoSettingsButton:true,
+
+showScreenSharingButton:true,
+
+showTextChat:true,
+
+showUserList:true,
+
+layout:"Grid",
+
+maxUsers:50
+
+})
+
+})
+
+</script>
+
 </body>
-</html>
 
+</html>

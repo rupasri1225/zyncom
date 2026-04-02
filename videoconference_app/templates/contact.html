@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="{% static 'css/contact.css' %}">
+    <link rel="shortcut icon" href="https://st1.zoom.us/homepage/publish/zoom.ico">
+</head>
+
+<body>
+    <header class="header">
+        <h1>Contact Us</h1>
+        <p>We’re here to help! Reach out to us for support or feedback.</p>
+        
+    </header>
+
+    <section class="contact-info">
+        <div class="info-card">
+            <h2>Email</h2>
+            <p><a href="mailto:chakravarthy.atipamula@gmail.com">support@Datavalley.ai</a></p>
+        </div>
+        <div class="info-card">
+            <h2>Phone</h2>
+            <p><a href="tel:+917013010980">+91 (7013) 010-980</a></p>
+        </div>
+        <div class="info-card">
+            <h2>Address</h2>
+            <p>Fortune Heights, 52-1 / 8-11, Plot No's-8 & 9, Road No-2, ESI Rd, beside Hotel Park N, NTR Colony,
+                Vijayawada, Andhra Pradesh 520008</p>
+        </div>
+    </section>
+
+    <section class="contact-form">
+        <h2>Send Us a Message</h2>
+        <form action="/contact/" method="post" onsubmit="submitForm(event)">
+            {% csrf_token %}
+            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="email" name="email" placeholder="Your Email" required>
+            <textarea name="message" placeholder="Your Message" required></textarea>
+            <button type="submit">Send Message</button>
+        </form>
+    </section>
+
+    <section class="map">
+        <h2>Our Location</h2>
+        <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3023.2992568399145!2d80.66563397388444!3d16.516211627319404!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a35e589838b2477%3A0x8ed79b319cc19408!2sDatavalley.ai%20%7C%20IT%20Solutions%20%7C%20Training%20%26%20Placement%20Institute%20in%20Vijayawada!5e1!3m2!1sen!2sin!4v1737432689001!5m2!1sen!2sin"
+            loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2025 Zoom Clone App. All rights reserved.</p>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function submitForm(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+
+            fetch('/contact/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: formData,
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showToast(data.message, 'success');
+                        event.target.reset();
+                    } else {
+                        showToast(data.message, 'error');
+                    }
+                })
+                .catch(() => showToast('Something went wrong!', 'error'));
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+
+            setTimeout(() => toast.className = 'toast', 1000);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom </title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Header */
+        .header {
+            background-color: #1c1c1c;
+            padding: 20px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .header .logo {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .header nav ul {
+            list-style-type: none;
+            display: flex;
+        }
+
+        .header nav ul li {
+            margin-left: 25px;
+        }
+
+        .header nav ul li a {
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .header nav ul li a:hover {
+            color: #00b8d4;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(0, 150, 136, 0.7), rgba(0, 188, 212, 0.7)), url('https://via.placeholder.com/1500x800') no-repeat center center/cover;
+            color: white;
+            text-align: center;
+            padding: 150px 20px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 22px;
+            margin-bottom: 30px;
+            animation: fadeInUp 1s ease-out 0.5s;
+        }
+
+        .cta-btn {
+            background-color: #00b8d4;
+            padding: 18px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .cta-btn:hover {
+            background-color: #008c96;
+            transform: scale(1.1);
+        }
+
+        /* Features Section */
+        .features {
+            background-color: #ffffff;
+            padding: 80px 20px;
+            text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .features h2 {
+            font-size: 36px;
+            margin-bottom: 40px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .feature-item {
+            margin-bottom: 50px;
+            display: inline-block;
+            width: 30%;
+            text-align: center;
+            animation: fadeInUp 1s ease-out 0.5s;
+        }
+
+        .feature-item .feature-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        .feature-item h3 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .feature-item p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* About Section */
+        .about {
+            background-color: #f9f9f9;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .about h2 {
+            font-size: 36px;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .about p {
+            font-size: 18px;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Footer Section */
+        footer {
+            background-color: #1c1c1c;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        footer a {
+            color: #00b8d4;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 40px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .cta-btn {
+                padding: 14px 30px;
+                font-size: 18px;
+            }
+
+            .features {
+                padding: 60px 20px;
+            }
+
+            .feature-item {
+                width: 100%;
+                margin-bottom: 40px;
+            }
+
+            .about {
+                padding: 60px 20px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <div class="logo">Zoom </div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'login' %}">Signin</a></li>
+                <li><a href="{% url 'register' %}">Signup</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Welcome to Zoom video call </h1>
+            <p>Seamless virtual meetings and conferences, anytime, anywhere.</p>
+            <button class="cta-btn">Start a Meeting</button>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <h2>Key Features</h2>
+        <div class="feature-item">
+            <div class="feature-icon">📞</div>
+            <h3>High-Quality Video</h3>
+            <p>Enjoy crystal-clear video calls with your colleagues, friends, and family.</p>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon">💻</div>
+            <h3>Screen Sharing</h3>
+            <p>Share your screen with participants to enhance collaboration.</p>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon">🎥</div>
+            <h3>Recording</h3>
+            <p>Record meetings for future reference and share them with attendees.</p>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <h2>About Zoom Clone</h2>
+        <p>This is a clone of the Zoom application, providing features for video conferencing, screen sharing, and more.
+            Stay connected with anyone, anywhere in the world.</p>
+    </section>
+
+    <!-- Footer Section -->
+    <footer id="contact">
+        <p>Contact us at <a href="mailto:contact@zoomclone.com">contact@Datavalley.Ai</a></p>
+    </footer>
+
+    <script>
+        // Adding interactivity for button hover effect or other animations
+        document.querySelector('.cta-btn').addEventListener('mouseenter', function () {
+            this.style.transform = 'scale(1.1)';
+        });
+
+        document.querySelector('.cta-btn').addEventListener('mouseleave', function () {
+            this.style.transform = 'scale(1)';
+        });
+    </script>
+</body>
+
+</html>

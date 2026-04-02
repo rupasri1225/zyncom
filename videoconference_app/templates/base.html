@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zyncom — {% block title %}Home{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Zyncom design system -->
+  <link rel="stylesheet" href="{% static 'css/zyncom.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── NAVBAR ──────────────────────────────────────────────────────────────── -->
+<nav class="zyncom-navbar">
+  <a href="{% url 'index' %}" class="zyncom-brand">
+    <div class="zyncom-brand-icon">Z</div>
+    <span>Zyncom</span>
+  </a>
+  <div class="zyncom-nav-links">
+    {% if user.is_authenticated %}
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+      <a href="{% url 'logout' %}" style="color:rgba(255,255,255,0.7);">Logout</a>
+    {% else %}
+      <a href="{% url 'login' %}">Login</a>
+      <a href="{% url 'register' %}" style="background:rgba(255,255,255,0.15);padding:0.4rem 1rem;border-radius:8px;">Register</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- ── TOAST CONTAINER ─────────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── CONTENT ─────────────────────────────────────────────────────────────── -->
+{% block full_content %}
+  <main class="zyncom-main">
+    {% block content %}{% endblock %}
+  </main>
+{% endblock %}
+
+<!-- ── FOOTER ──────────────────────────────────────────────────────────────── -->
+<footer class="zyncom-footer">
+  Designed by Yarramsetti Rupa Sri &amp; Team
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function showToast(message, type) {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  if (type === 'error') t.style.borderLeftColor = '#dc2626';
+  if (type === 'success') t.style.borderLeftColor = '#22c55e';
+  t.textContent = message;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, 4000);
+}
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

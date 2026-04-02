@@ -1,54 +1,59 @@
-from pathlib import Path
-import django_heroku
-import dj_database_url
-from decouple import config
-import os
+"""
+Zyncom - Django Settings
+========================
+Simple, beginner-friendly settings for the Zyncom collaboration platform.
+Uses InMemoryChannelLayer for local development (no Redis needed).
+Swap to channels_redis for production (see comment below).
+"""
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from pathlib import Path
+import os
+from decouple import config
+
+# ─── Base directory ───────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='your-secret-key')
-
-# SECURITY WARNING: don't run with debug turned on in production!
+# ─── Security ─────────────────────────────────────────────────────────────────
+SECRET_KEY = config('SECRET_KEY', default='change-me-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = ['*']
 
-ALLOWED_HOSTS = []
-
-# Application definition
-
+# ─── Installed apps ───────────────────────────────────────────────────────────
+# IMPORTANT: 'daphne' MUST be first so it handles ASGI correctly.
 INSTALLED_APPS = [
+    'daphne',                               # Must be FIRST (ASGI server)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'videoconference_app',
-    'channels',
+    'channels',                             # Django Channels (WebSockets)
+    'videoconference_app',                  # Our main app
 ]
 
+# ─── Middleware ────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',    # Serve static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'videoconference_app.middleware.ActiveUserMiddleware',
 ]
 
+# ─── URL & ASGI/WSGI ──────────────────────────────────────────────────────────
 ROOT_URLCONF = 'videoconferencing.urls'
+WSGI_APPLICATION = 'videoconferencing.wsgi.application'
+ASGI_APPLICATION = 'videoconferencing.asgi.application'  # Points to our ASGI app
 
+# ─── Templates ────────────────────────────────────────────────────────────────
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [],          # Templates are found via APP_DIRS=True
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,58 +66,67 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'videoconferencing.wsgi.application'
-ASGI_APPLICATION = 'videoconferencing.asgi.application'
-
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
+# ─── Database ─────────────────────────────────────────────────────────────────
+# Uses SQLite by default (stored in BASE_DIR/db.sqlite3).
+# Set DATABASE_URL in .env for PostgreSQL in production.
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///db.sqlite3')
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+# ─── Django Channels (WebSockets) ─────────────────────────────────────────────
+# InMemoryChannelLayer: works out of the box, no Redis needed for development.
+# For production, replace with:
+#   'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#   'CONFIG': {'hosts': [('127.0.0.1', 6379)]},
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
+# ─── Password validation ──────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
+# ─── Internationalisation ─────────────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
+# ─── Static files ─────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+# ─── Media files (user uploads) ───────────────────────────────────────────────
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
+# ─── Default primary key ──────────────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configure Django App for Heroku.
-django_heroku.settings(locals())
+# ─── Authentication redirects ─────────────────────────────────────────────────
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
+
+# ─── ZegoCloud credentials ────────────────────────────────────────────────────
+# Add ZEGO_APP_ID and ZEGO_SERVER_SECRET to your .env file.
+ZEGO_APP_ID = config('ZEGO_APP_ID', default='')
+ZEGO_SERVER_SECRET = config('ZEGO_SERVER_SECRET', default='')
+
+# ─── Email (optional) ─────────────────────────────────────────────────────────
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')

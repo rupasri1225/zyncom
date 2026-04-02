@@ -1,4 +1,51 @@
-videoconference_app/__pycache__/*
-videoconference_app/migrations/*
-videoconferencing/__pycache__/*
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+venv/
+env/
+.venv/
+ENV/
+
+# Django
 *.sqlite3
+db.sqlite3
+staticfiles/
+media/
+local_settings.py
+
+# Environment variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Kiro spec files (optional — remove this block if you want to keep them)
+.kiro/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/

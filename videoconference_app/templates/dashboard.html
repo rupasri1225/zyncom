@@ -1,20 +1,220 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Video Conference</title>
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-    <div class="dashboard">
-        <h1>Welcome, {{name}}!</h1>
-        <a href="{% url 'meeting' %}" class="button">New Meeting</a>
-        <a href="{% url 'join_room' %}" class="button">Join Meeting</a>
-        <a href="{% url 'random_call' %}" class="button">Random Call</a>
-        <a href="{% url 'logout' %}" class="button">Logout</a>
-    </div>
-</body>
-</html>
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Page header ──────────────────────────────────────────────────────── */
+  .dash-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+  }
+  .dash-header h1 { font-size: 1.75rem; font-weight: 800; }
+  .dash-welcome { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem; }
+
+  /* ── Action panels ────────────────────────────────────────────────────── */
+  .action-panels {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.25rem; margin-bottom: 2rem;
+  }
+  @media (max-width: 640px) { .action-panels { grid-template-columns: 1fr; } }
+
+  .action-panel h3 {
+    font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem;
+    color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem;
+  }
+  .action-panel .input-row { display: flex; gap: 0.5rem; }
+  .action-panel .input-row .form-control { flex: 1; }
+
+  /* ── Search ───────────────────────────────────────────────────────────── */
+  .search-wrap {
+    position: relative; margin-bottom: 1.25rem;
+  }
+  .search-wrap .search-icon {
+    position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%);
+    color: var(--text-dim); font-size: 0.9rem; pointer-events: none;
+  }
+  .search-wrap .form-control { padding-left: 2.5rem; }
+
+  /* ── Section label ────────────────────────────────────────────────────── */
+  .section-label {
+    font-size: 0.72rem; font-weight: 700; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 1rem;
+  }
+
+  /* ── Room grid ────────────────────────────────────────────────────────── */
+  .rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  /* ── Room card ────────────────────────────────────────────────────────── */
+  .room-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1.25rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    color: var(--text-primary);
+    transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    position: relative;
+    overflow: hidden;
+  }
+  .room-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--purple-800), var(--purple-600));
+    opacity: 0; transition: opacity 0.18s;
+  }
+  .room-card:hover {
+    border-color: rgba(124,58,237,0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.1);
+    color: var(--text-primary);
+  }
+  .room-card:hover::before { opacity: 1; }
+
+  .room-card-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, rgba(107,33,168,0.3), rgba(79,70,229,0.3));
+    border: 1px solid rgba(124,58,237,0.25);
+    border-radius: var(--r-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; margin-bottom: 0.85rem;
+  }
+  .room-card-name {
+    font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: white;
+  }
+  .room-card-id {
+    font-size: 0.72rem; color: var(--text-dim);
+    font-family: 'Courier New', monospace;
+    background: rgba(255,255,255,0.05);
+    padding: 0.15rem 0.45rem; border-radius: var(--r-xs);
+    display: inline-block; margin-bottom: 0.6rem;
+  }
+  .room-card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.75rem; color: var(--text-muted);
+  }
+  .room-card-arrow {
+    color: var(--purple-400); font-size: 1rem;
+    transition: transform 0.18s;
+  }
+  .room-card:hover .room-card-arrow { transform: translateX(3px); }
+
+  /* ── No results ───────────────────────────────────────────────────────── */
+  #no-search-results { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="dash-header">
+  <div>
+    <h1 class="gradient-text">Your Rooms</h1>
+    <p class="dash-welcome">Welcome back, <strong style="color:var(--text-primary);">{{ username }}</strong></p>
+  </div>
+</div>
+
+<!-- Create & Join -->
+<div class="action-panels">
+  <div class="card card-sm action-panel">
+    <h3>➕ Create a Room</h3>
+    {% if create_error %}
+      <div class="alert alert-error" style="margin-bottom:0.75rem;">{{ create_error }}</div>
+    {% endif %}
+    <form method="POST" action="{% url 'create_room' %}">
+      {% csrf_token %}
+      <div class="input-row">
+        <input type="text" name="name" class="form-control" placeholder="Room name…" maxlength="100" required>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card card-sm action-panel">
+    <h3>🔗 Join a Room</h3>
+    {% if join_error %}
+      <div class="alert alert-error" style="margin-bottom:0.75rem;">{{ join_error }}</div>
+    {% endif %}
+    <form method="POST" action="{% url 'join_room' %}">
+      {% csrf_token %}
+      <div class="input-row">
+        <input type="text" name="room_id" class="form-control" placeholder="Enter room ID…" maxlength="20" required>
+        <button type="submit" class="btn btn-secondary">Join</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Room list -->
+{% if rooms %}
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="room-search" class="form-control" placeholder="Search rooms…">
+  </div>
+
+  <p class="section-label">{{ rooms|length }} room{{ rooms|length|pluralize }}</p>
+
+  <div class="rooms-grid" id="rooms-grid">
+    {% for room in rooms %}
+      <a href="{% url 'workspace' room.room_id %}" class="room-card" data-name="{{ room.name|lower }}">
+        <div class="room-card-icon">🏠</div>
+        <div class="room-card-name">{{ room.name }}</div>
+        <div class="room-card-id">{{ room.room_id }}</div>
+        <div class="room-card-meta">
+          <span>{{ room.created_at|date:"M d, Y" }}</span>
+          <div style="display:flex;align-items:center;gap:0.4rem;">
+            {% if room.created_by == request.user %}
+              <span class="badge badge-host">Host</span>
+            {% endif %}
+            <span class="room-card-arrow">→</span>
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <div id="no-search-results" class="empty-state" style="padding:2rem 0;">
+    <div class="empty-state-icon">🔍</div>
+    <h4>No rooms match your search</h4>
+    <p>Try a different name or clear the search.</p>
+  </div>
+
+{% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🏠</div>
+    <h4>No rooms yet</h4>
+    <p>Create a room above or join one with a room ID to get started.</p>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const searchInput = document.getElementById('room-search');
+const roomsGrid   = document.getElementById('rooms-grid');
+const noResults   = document.getElementById('no-search-results');
+
+if (searchInput) {
+  searchInput.addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    const cards = roomsGrid ? roomsGrid.querySelectorAll('.room-card') : [];
+    let visible = 0;
+    cards.forEach(c => {
+      const match = !q || (c.dataset.name || '').includes(q);
+      c.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    if (noResults) noResults.style.display = (q && visible === 0) ? 'block' : 'none';
+  });
+}
+</script>
+{% endblock %}

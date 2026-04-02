@@ -1,0 +1,220 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Helvetica', sans-serif;
+    line-height: 1.6;
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Header */
+.header {
+    background-color: #1c1c1c;
+    padding: 10px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.header .logo {
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.header nav ul {
+    list-style-type: none;
+    display: flex;
+}
+
+.header nav ul li {
+    margin-left: 25px;
+}
+
+.header nav ul li a {
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.header nav ul li a:hover {
+    color: #09d7f7;
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, rgba(0, 150, 136, 0.7), rgba(0, 188, 212, 0.7)), url('https://via.placeholder.com/1500x800') no-repeat center center/cover;
+    color: white;
+    text-align: center;
+    padding: 150px 20px;
+    animation: fadeIn 1s ease-out;
+}
+
+.hero h1 {
+    font-size: 56px;
+    margin-bottom: 15px;
+    font-weight: 700;
+    animation: fadeInUp 1s ease-out;
+}
+
+.hero p {
+    font-size: 22px;
+    margin-bottom: 30px;
+    animation: fadeInUp 1s ease-out 0.5s;
+}
+
+.cta-btn {
+    background-color: #00b8d4;
+    padding: 18px 40px;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.cta-btn:hover {
+    background-color: #008c96;
+    transform: scale(1.1);
+}
+
+/* Features Section */
+.features {
+    background-color: #ffffff;
+    padding: 80px 20px;
+    text-align: center;
+    animation: fadeIn 1s ease-out;
+}
+
+.features h2 {
+    font-size: 36px;
+    margin-bottom: 40px;
+    font-weight: 700;
+    color: #333;
+}
+
+.feature-item {
+    margin-bottom: 50px;
+    display: inline-block;
+    width: 30%;
+    text-align: center;
+    animation: fadeInUp 1s ease-out 0.5s;
+}
+
+.feature-item .feature-icon {
+    font-size: 50px;
+    margin-bottom: 20px;
+}
+
+.feature-item h3 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.feature-item p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* About Section */
+.about {
+    background-color: #f9f9f9;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.about h2 {
+    font-size: 36px;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.about p {
+    font-size: 18px;
+    line-height: 1.8;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Footer Section */
+footer {
+    background-color: #1c1c1c;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+
+footer a {
+    color: #00b8d4;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero h1 {
+        font-size: 40px;
+    }
+
+    .hero p {
+        font-size: 18px;
+    }
+
+    .cta-btn {
+        padding: 14px 30px;
+        font-size: 18px;
+    }
+
+    .features {
+        padding: 60px 20px;
+    }
+
+    .feature-item {
+        width: 100%;
+        margin-bottom: 40px;
+    }
+
+    .about {
+        padding: 60px 20px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
