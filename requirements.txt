@@ -2,17 +2,17 @@
 django==5.1.1
 python-decouple==3.8
 
-# Django Channels (WebSockets)
+# Django Channels + ASGI server
 channels[daphne]==4.3.2
 daphne==4.2.1
 
-# Static files
+# Static files (production)
 whitenoise==6.12.0
 
-# REST framework (used for file upload endpoint)
+# REST framework
 djangorestframework==3.16.1
 
-# Database URL parsing
+# Database
 dj-database-url==3.1.2
 
 # ASGI
@@ -21,7 +21,5 @@ asgiref==3.11.1
 # Testing
 hypothesis==6.151.10
 
-# Production (uncomment for deployment with Redis)
+# Production with Redis WebSockets (uncomment if scaling beyond 1 instance)
 # channels_redis==4.2.0
-# gunicorn==21.2.0
-# psycopg2-binary==2.9.9
