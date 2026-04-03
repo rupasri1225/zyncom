@@ -111,10 +111,15 @@ USE_TZ = True
 
 # ── Static files ───────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# WhiteNoise: serve compressed static files without a CDN
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Tell Django where to find static files BEFORE collectstatic copies them
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'videoconference_app', 'static'),
+]
+
+# WhiteNoise: CompressedStaticFilesStorage (NOT Manifest — avoids hash issues on Render)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # ── Media files (user uploads) ─────────────────────────────────────────────────
 MEDIA_URL = '/media/'
