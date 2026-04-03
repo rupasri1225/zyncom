@@ -111,14 +111,14 @@ USE_TZ = True
 
 # ── Static files ───────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # WhiteNoise: serve compressed static files without a CDN
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 # ── Media files (user uploads) ─────────────────────────────────────────────────
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 # ── Default primary key ────────────────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
