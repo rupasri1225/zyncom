@@ -112,6 +112,7 @@ USE_TZ = True
 # ── Static files ───────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+<<<<<<< HEAD
 
 # Tell Django where to find static files BEFORE collectstatic copies them
 STATICFILES_DIRS = [
@@ -121,10 +122,17 @@ STATICFILES_DIRS = [
 # WhiteNoise: CompressedStaticFilesStorage (NOT Manifest — avoids hash issues on Render)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
+=======
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'videoconference_app/static')
+]
+# WhiteNoise: serve compressed static files without a CDN
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+>>>>>>> f1d11ea8869289d81db5f5a4d099aabbb044442c
 # ── Media files (user uploads) ─────────────────────────────────────────────────
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 # ── Default primary key ────────────────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
