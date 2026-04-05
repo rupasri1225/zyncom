@@ -1,91 +1,68 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Features{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zoom || Features</title>
-    <link rel="shortcut icon" href="https://st1.zoom.us/homepage/publish/zoom.ico">
-    <link rel="stylesheet" href="{% static 'css/features.css' %}">
-   
-</head>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/features.css' %}">
+{% endblock %}
 
-<body>
-    <header class="header">
-        <h1>Zoom Clone Features</h1>
-    </header>
-    <main>
-        <section class="features">
-            <div class="feature" id="new-meeting">
-                <i class="icon">📅</i>
-                <h2>New Meeting</h2>
-                <p>Host secure and instant meetings with ease.</p>
-            </div>
-            <div class="feature" id="join-meeting">
-                <i class="icon">🔗</i>
-                <h2>Join Meeting</h2>
-                <p>Quickly join meetings using a secure link.</p>
-            </div>
-            <div class="feature" id="chat-support">
-                <i class="icon">💬</i>
-                <h2>Chat Support</h2>
-                <p>Real-time messaging for effective communication.</p>
-            </div>
-            <div class="feature" id="mic">
-                <i class="icon">🎤</i>
-                <h2>Microphone</h2>
-                <p>Crystal clear audio for seamless conversations.</p>
-            </div>
-            <div class="feature" id="video">
-                <i class="icon">📹</i>
-                <h2>Video</h2>
-                <p>High-quality video conferencing.</p>
-            </div>
-            <div class="feature" id="screen-share">
-                <i class="icon">🖥️</i>
-                <h2>Screen Presenting</h2>
-                <p>Share your screen with others easily.</p>
-            </div>
-        </section>
-    </main>
-    <footer class="footer">
-        <p>&copy; 2025 Zoom Clone. All rights reserved.</p>
-    </footer>
-    <script>
+{% block content %}
+<section class="features">
+    <div class="feature" id="new-meeting">
+        <i class="icon">📅</i>
+        <h2>New Meeting</h2>
+        <p>Host secure and instant meetings with ease.</p>
+    </div>
+    <div class="feature" id="join-meeting">
+        <i class="icon">🔗</i>
+        <h2>Join Meeting</h2>
+        <p>Quickly join meetings using a secure link.</p>
+    </div>
+    <div class="feature" id="chat-support">
+        <i class="icon">💬</i>
+        <h2>Chat Support</h2>
+        <p>Real-time messaging for effective communication.</p>
+    </div>
+    <div class="feature" id="mic">
+        <i class="icon">🎤</i>
+        <h2>Microphone</h2>
+        <p>Crystal clear audio for seamless conversations.</p>
+    </div>
+    <div class="feature" id="video">
+        <i class="icon">📹</i>
+        <h2>Video</h2>
+        <p>High-quality video conferencing.</p>
+    </div>
+    <div class="feature" id="screen-share">
+        <i class="icon">🖥️</i>
+        <h2>Screen Presenting</h2>
+        <p>Share your screen with others easily.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
 document.addEventListener("DOMContentLoaded", function () {
-
     const isAuthenticated = "{{ request.user.is_authenticated|yesno:'true,false' }}" === "true";
-
-    const routes = {
-        "new-meeting": "{% url 'meeting' %}",
-        "join-meeting": "{% url 'join_room' %}",
-        "chat-support": "{% url 'dashboard' %}",
-        "mic": "{% url 'meeting' %}",
-        "video": "{% url 'meeting' %}",
-        "screen-share": "{% url 'meeting' %}"
-    };
-
+    const dashboardURL = "{% url 'dashboard' %}";
+    const joinURL = "{% url 'join_room' %}";
     const loginURL = "{% url 'login' %}";
 
+    const routes = {
+        "new-meeting": dashboardURL,
+        "join-meeting": joinURL,
+        "chat-support": dashboardURL,
+        "mic": dashboardURL,
+        "video": dashboardURL,
+        "screen-share": dashboardURL
+    };
+
     document.querySelectorAll(".feature").forEach(card => {
-
         card.addEventListener("click", function () {
-
-            const featureID = this.id;
-
-            if (isAuthenticated) {
-                window.location.href = routes[featureID];
-            } else {
-                window.location.href = loginURL;
-            }
-
+            window.location.href = isAuthenticated ? routes[this.id] : loginURL;
         });
-
     });
-
 });
 </script>
-</body>
-
-</html>
+{% endblock %}

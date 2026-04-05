@@ -106,10 +106,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Where Django looks for static files before collectstatic
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'videoconference_app', 'static'),
-]
+# AppDirectoriesFinder (enabled via APP_DIRS=True in TEMPLATES) already picks up
+# videoconference_app/static/ automatically — no need to list it in STATICFILES_DIRS.
+# Listing it here AND having APP_DIRS=True causes duplicate-file warnings.
+STATICFILES_DIRS = []
 
 # WhiteNoise compressed storage (no manifest hash — safer for Render)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
