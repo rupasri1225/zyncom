@@ -104,16 +104,10 @@ USE_TZ = True
 
 # ── Static files ───────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# AppDirectoriesFinder (enabled via APP_DIRS=True in TEMPLATES) already picks up
-# videoconference_app/static/ automatically — no need to list it in STATICFILES_DIRS.
-# Listing it here AND having APP_DIRS=True causes duplicate-file warnings.
-STATICFILES_DIRS = []
-
-# WhiteNoise compressed storage (no manifest hash — safer for Render)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
 # ── Media files ────────────────────────────────────────────────────────────────
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
